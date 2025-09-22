@@ -158,7 +158,7 @@ export default function ExpenseList() {
             }}
           >
             <thead>
-              <tr style={{ background: 'rgba(37, 99, 235, 0.06)' }}>
+              <tr style={{ background: 'var(--brand-secondary-50)' }}>
                 <th style={thStyle}>Date</th>
                 <th style={thStyle}>Category</th>
                 <th style={thStyle}>Description</th>

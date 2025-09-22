@@ -30,7 +30,7 @@ export default function LoginPage({ onSwitchToSignup }) {
           </div>
         </div>
         <h2 style={{ margin: '8px 0 2px 0' }}>Welcome back</h2>
-        <p style={{ marginTop: 0, color: 'rgba(17,24,39,0.7)' }}>Sign in to continue</p>
+        <p style={{ marginTop: 0, color: 'var(--text-secondary)' }}>Sign in to continue</p>
 
         {error ? (
           <div role="alert" style={alertErr}>{error}</div>

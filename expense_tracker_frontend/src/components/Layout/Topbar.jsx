@@ -20,11 +20,11 @@ export default function Topbar() {
     <header className="et-topbar" aria-label="Topbar">
       <h1 className="et-topbar__title">My Expenses</h1>
       <div className="et-topbar__actions">
-        <span style={{ alignSelf: 'center', marginRight: 6, color: 'rgba(17,24,39,0.7)' }}>
+        <span style={{ alignSelf: 'center', marginRight: 6, color: 'var(--text-inverse)' }}>
           {user ? `Hi, ${user.name}` : ''}
         </span>
         <button className="et-btn et-btn--ghost" type="button" aria-label="Search">Search</button>
-        <button className="et-btn et-btn--primary" type="button" onClick={openAddExpense}>Add Expense</button>
+        <button className="et-btn et-btn--secondary" type="button" onClick={openAddExpense}>Add Expense</button>
         <button className="et-btn" type="button" onClick={logout} disabled={loading} aria-label="Sign out">
           Sign out
         </button>

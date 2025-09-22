@@ -175,7 +175,7 @@ export default function Charts() {
         <div style={card}>
           <h4 style={cardTitle}>By Category</h4>
           {totalAll <= 0 || byCategory.length === 0 ? (
-            <p style={{ marginTop: 6, color: 'rgba(17,24,39,0.6)' }}>No data</p>
+            <p style={{ marginTop: 6, color: 'var(--text-secondary)' }}>No data</p>
           ) : (
             <div style={{ display: 'flex', gap: 16, alignItems: 'center', justifyContent: 'center' }}>
               <svg

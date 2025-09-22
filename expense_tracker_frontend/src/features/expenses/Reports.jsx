@@ -294,7 +294,7 @@ const thStyle = {
   padding: '12px 14px',
   textAlign: 'left',
   borderBottom: 'var(--border)',
-  color: 'var(--text)',
+  color: 'var(--text-primary)',
   fontWeight: 600,
 };
 

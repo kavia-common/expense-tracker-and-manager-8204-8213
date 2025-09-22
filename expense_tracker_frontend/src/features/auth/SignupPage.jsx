@@ -30,7 +30,7 @@ export default function SignupPage({ onSwitchToLogin }) {
           </div>
         </div>
         <h2 style={{ margin: '8px 0 2px 0' }}>Create your account</h2>
-        <p style={{ marginTop: 0, color: 'rgba(17,24,39,0.7)' }}>Start tracking expenses today</p>
+        <p style={{ marginTop: 0, color: 'var(--text-secondary)' }}>Start tracking expenses today</p>
 
         {error ? (
           <div role="alert" style={alertErr}>{error}</div>

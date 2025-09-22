@@ -123,7 +123,7 @@ export default function SummaryCards() {
 
   return (
     <div>
-      <h3 style={{ marginTop: 0, marginBottom: 12 }}>Summary</h3>
+      <h3 style={{ marginTop: 0, marginBottom: 12, color: 'var(--text-primary)' }}>Summary</h3>
 
       {loading ? (
         <div style={cardsGrid}>
