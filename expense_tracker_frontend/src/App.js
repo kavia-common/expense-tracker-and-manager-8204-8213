@@ -53,14 +53,53 @@ function AppBody() {
     );
   }
 
+  // Dashboard layout: summary cards top, charts below, then filters and list.
   return (
     <Container>
-      <SummaryCards />
-      <ExpenseFilters />
-      <ExpenseList />
-      <Charts />
+      <div style={dashboardWrap}>
+        {/* Top - Summary */}
+        <section aria-label="Monthly summary" style={sectionBlock}>
+          <SummaryCards />
+        </section>
+
+        {/* Charts block */}
+        <section aria-label="Visualizations" style={sectionBlock}>
+          <Charts />
+        </section>
+
+        {/* Filters and List */}
+        <section aria-label="Expense controls and list" style={{ ...sectionBlock, marginTop: 8 }}>
+          <div style={controlsRow}>
+            <h2 style={{ margin: 0, fontSize: 18 }}>Expenses</h2>
+            {/* Additional quick actions could go here */}
+          </div>
+          <div style={{ marginTop: 12 }}>
+            <ExpenseFilters />
+          </div>
+          <div style={{ marginTop: 12 }}>
+            <ExpenseList />
+          </div>
+        </section>
+      </div>
     </Container>
   );
 }
+
+// Local inline styles to keep within template and avoid new CSS files
+const dashboardWrap = {
+  display: 'grid',
+  gap: 16,
+};
+
+const sectionBlock = {
+  background: 'transparent',
+};
+
+const controlsRow = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 12,
+};
 
 export default App;
