@@ -8,15 +8,17 @@ import '../../styles/theme.css';
  */
 // PUBLIC_INTERFACE
 export default function Container({ children }) {
-  /** Provides the dashboard two-column layout. */
+  /** Provides the dashboard two-column layout with ocean gradient background. */
   return (
     <div className="et-layout">
       <Sidebar />
       <main className="et-main">
         <Topbar />
-        <section className="et-content">
-          {children}
-        </section>
+        <div className="et-page">
+          <section className="et-content">
+            {children}
+          </section>
+        </div>
       </main>
     </div>
   );

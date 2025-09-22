@@ -62,26 +62,31 @@
   position: absolute;
   top: 20px;
   right: 20px;
-  background-color: var(--button-bg);
-  color: var(--button-text);
+  background: linear-gradient(180deg, #2563EB 0%, #1D4ED8 100%);
+  color: #fff;
   border: none;
-  border-radius: 8px;
-  padding: 10px 20px;
-  font-size: 14px;
-  font-weight: 600;
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 140ms ease, box-shadow 180ms ease, filter 180ms ease;
+  box-shadow: 0 8px 18px rgba(2, 6, 23, 0.12);
+  outline: none;
 }
 
 .theme-toggle:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(2, 6, 23, 0.16);
+  filter: saturate(1.06);
 }
 
 .theme-toggle:active {
   transform: translateY(0);
+}
+
+.theme-toggle:focus-visible {
+  box-shadow: 0 0 0 4px rgba(37,99,235,0.2), 0 8px 18px rgba(2, 6, 23, 0.12);
 }
 
 @keyframes App-logo-spin {
