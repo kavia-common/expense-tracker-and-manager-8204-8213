@@ -1,0 +1,29 @@
+[
+  {
+    "id": "e-001",
+    "date": "2025-09-01",
+    "amount": 42.75,
+    "category": "Food",
+    "description": "Lunch with team",
+    "paymentMethod": "Credit Card",
+    "tags": ["work", "team"]
+  },
+  {
+    "id": "e-002",
+    "date": "2025-09-02",
+    "amount": 120.00,
+    "category": "Transport",
+    "description": "Monthly metro pass",
+    "paymentMethod": "Debit Card",
+    "tags": ["commute"]
+  },
+  {
+    "id": "e-003",
+    "date": "2025-09-03",
+    "amount": 59.99,
+    "category": "Utilities",
+    "description": "Internet bill",
+    "paymentMethod": "Bank Transfer",
+    "tags": ["home"]
+  }
+]

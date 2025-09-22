@@ -1,0 +1,116 @@
+:root {
+  /* Ocean Professional Theme Variables */
+  --primary: #2563EB;     /* Blue */
+  --secondary: #F59E0B;   /* Amber */
+  --success: #10B981;     /* Emerald */
+  --error: #EF4444;       /* Red */
+  --background: #f9fafb;  /* Light gray */
+  --surface: #ffffff;     /* White */
+  --text: #111827;        /* Gray-900 */
+
+  --radius: 12px;
+  --shadow: 0 8px 24px rgba(2, 6, 23, 0.06);
+  --border: 1px solid rgba(17, 24, 39, 0.08);
+}
+
+body {
+  background: var(--background);
+  color: var(--text);
+}
+
+/* Layout */
+.et-layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 100vh;
+  background: var(--background);
+}
+
+.et-sidebar {
+  background: linear-gradient(180deg, rgba(37, 99, 235, 0.08), rgba(249, 250, 251, 0));
+  border-right: var(--border);
+  padding: 24px 16px;
+}
+
+.et-sidebar__brand {
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 16px;
+}
+
+.et-sidebar__nav {
+  display: grid;
+  gap: 8px;
+}
+
+.et-sidebar__link {
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.et-sidebar__link:hover {
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.et-main {
+  display: flex;
+  flex-direction: column;
+}
+
+.et-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border-bottom: var(--border);
+  padding: 16px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.et-topbar__title {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.et-topbar__actions {
+  display: flex;
+  gap: 8px;
+}
+
+.et-content {
+  padding: 20px;
+}
+
+/* Buttons */
+.et-btn {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: var(--border);
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+}
+
+.et-btn--primary {
+  background: var(--primary);
+  color: white;
+  border: none;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .et-layout {
+    grid-template-columns: 1fr;
+  }
+  .et-sidebar {
+    display: none;
+  }
+}
