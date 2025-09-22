@@ -6,6 +6,7 @@ import SummaryCards from './features/expenses/SummaryCards';
 import ExpenseFilters from './features/expenses/ExpenseFilters';
 import ExpenseList from './features/expenses/ExpenseList';
 import Charts from './features/expenses/Charts';
+import Reports from './features/expenses/Reports';
 import LoginPage from './features/auth/LoginPage';
 import SignupPage from './features/auth/SignupPage';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -44,6 +45,7 @@ function App() {
 function AppBody() {
   const { user } = useAuth();
   const [authView, setAuthView] = useState('login'); // 'login' | 'signup'
+  const [view, setView] = useState('dashboard'); // 'dashboard' | 'expenses' | 'reports'
 
   if (!user) {
     return authView === 'login' ? (
@@ -53,34 +55,40 @@ function AppBody() {
     );
   }
 
-  // Dashboard layout: summary cards top, charts below, then filters and list.
+  const onNavigate = (key) => {
+    setView(key);
+  };
+
   return (
-    <Container>
-      <div style={dashboardWrap}>
-        {/* Top - Summary */}
-        <section aria-label="Monthly summary" style={sectionBlock}>
-          <SummaryCards />
-        </section>
+    <Container active={view} onNavigate={onNavigate}>
+      {view === 'reports' ? (
+        <Reports />
+      ) : (
+        <div style={dashboardWrap}>
+          {/* Top - Summary */}
+          <section aria-label="Monthly summary" style={sectionBlock}>
+            <SummaryCards />
+          </section>
 
-        {/* Charts block */}
-        <section aria-label="Visualizations" style={sectionBlock}>
-          <Charts />
-        </section>
+          {/* Charts block */}
+          <section aria-label="Visualizations" style={sectionBlock}>
+            <Charts />
+          </section>
 
-        {/* Filters and List */}
-        <section aria-label="Expense controls and list" style={{ ...sectionBlock, marginTop: 8 }}>
-          <div style={controlsRow}>
-            <h2 style={{ margin: 0, fontSize: 18 }}>Expenses</h2>
-            {/* Additional quick actions could go here */}
-          </div>
-          <div style={{ marginTop: 12 }}>
-            <ExpenseFilters />
-          </div>
-          <div style={{ marginTop: 12 }}>
-            <ExpenseList />
-          </div>
-        </section>
-      </div>
+          {/* Filters and List */}
+          <section aria-label="Expense controls and list" style={{ ...sectionBlock, marginTop: 8 }}>
+            <div style={controlsRow}>
+              <h2 style={{ margin: 0, fontSize: 18 }}>Expenses</h2>
+            </div>
+            <div style={{ marginTop: 12 }}>
+              <ExpenseFilters />
+            </div>
+            <div style={{ marginTop: 12 }}>
+              <ExpenseList />
+            </div>
+          </section>
+        </div>
+      )}
     </Container>
   );
 }
