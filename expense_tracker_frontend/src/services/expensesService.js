@@ -18,6 +18,7 @@
 // }
 //
 import { StorageKeys, getAll, setAll, addItem, updateItem, removeItem } from './storage';
+import { getSession } from './auth';
 
 /**
  * Normalize an expense into a JSON-safe object with canonical field types.
@@ -128,36 +129,47 @@ function generateId() {
 
 // PUBLIC_INTERFACE
 export async function listExpenses() {
-  /** Returns all expenses (initializing from seed on first run). */
+  /** Returns all expenses for the current user (initializing from seed on first run). */
+  const session = getSession();
+  const userId = session?.userId || null;
   const list = await getAll(StorageKeys.EXPENSES);
+  const mine = userId ? list.filter((e) => e.userId === userId) : [];
   // Ensure output is normalized JSON-safe
-  return list.map((e) => normalizeExpense(e));
+  return mine.map((e) => normalizeExpense(e));
 }
 
 // PUBLIC_INTERFACE
 export async function getById(id) {
-  /** Returns a single expense by id, or null if not found. */
+  /** Returns a single expense by id for current user, or null if not found. */
   if (!id) return null;
+  const session = getSession();
+  const userId = session?.userId || null;
+  if (!userId) return null;
   const list = await getAll(StorageKeys.EXPENSES);
-  const found = list.find((e) => e.id === id);
+  const found = list.find((e) => e.id === id && e.userId === userId);
   return found ? normalizeExpense(found) : null;
 }
 
 // PUBLIC_INTERFACE
 export async function create(expense) {
   /**
-   * Creates a new expense.
+   * Creates a new expense for current user.
    * - Generates id if missing.
    * - Normalizes and validates input.
    * - Persists to storage and returns the created expense.
    */
+  const session = getSession();
+  const userId = session?.userId || null;
+  if (!userId) throw new Error('Not authenticated');
+
   const normalized = normalizeExpense({
     id: expense?.id || generateId(),
     ...expense,
+    userId,
   });
   validateExpense(normalized);
 
-  const updatedList = await addItem(StorageKeys.EXPENSES, normalized);
+  await addItem(StorageKeys.EXPENSES, normalized);
   // Return the created item as saved (normalized)
   return normalized;
 }
@@ -165,23 +177,26 @@ export async function create(expense) {
 // PUBLIC_INTERFACE
 export async function update(id, partial) {
   /**
-   * Updates an existing expense by id with provided partial fields.
+   * Updates an existing expense by id with provided partial fields for the current user.
    * - Loads existing expense, merges, normalizes, validates.
    * - Persists change and returns updated expense.
    */
   if (!id) throw new Error('Id is required for update');
+  const session = getSession();
+  const userId = session?.userId || null;
+  if (!userId) throw new Error('Not authenticated');
 
   const list = await getAll(StorageKeys.EXPENSES);
-  const existing = list.find((e) => e.id === id);
+  const existing = list.find((e) => e.id === id && e.userId === userId);
   if (!existing) throw new Error('Expense not found');
 
-  const merged = { ...existing, ...partial, id }; // keep id intact
+  const merged = { ...existing, ...partial, id, userId }; // keep ownership
   const normalized = normalizeExpense(merged);
   validateExpense(normalized);
 
   await updateItem(
     StorageKeys.EXPENSES,
-    (e) => e.id === id,
+    (e) => e.id === id && e.userId === userId,
     () => normalized
   );
 
@@ -191,32 +206,44 @@ export async function update(id, partial) {
 // PUBLIC_INTERFACE
 export async function remove(id) {
   /**
-   * Removes an expense by id.
+   * Removes an expense by id for the current user.
    * Returns true if an item was removed, false if not found.
    */
   if (!id) return false;
+  const session = getSession();
+  const userId = session?.userId || null;
+  if (!userId) throw new Error('Not authenticated');
   const before = await getAll(StorageKeys.EXPENSES);
-  const had = before.some((e) => e.id === id);
-  await removeItem(StorageKeys.EXPENSES, (e) => e.id === id);
+  const had = before.some((e) => e.id === id && e.userId === userId);
+  await removeItem(StorageKeys.EXPENSES, (e) => e.id === id && e.userId === userId);
   return had;
 }
 
 // PUBLIC_INTERFACE
 export async function replaceAll(expenses) {
   /**
-   * Replaces entire expenses dataset.
+   * Replaces entire expenses dataset for the current user only.
    * Validates and normalizes all entries before saving.
    * Returns saved list.
    */
+  const session = getSession();
+  const userId = session?.userId || null;
+  if (!userId) throw new Error('Not authenticated');
   if (!Array.isArray(expenses)) throw new Error('Input must be an array');
-  const normalized = expenses.map((e) => {
-    const withId = { id: e?.id || generateId(), ...e };
-    const n = normalizeExpense(withId);
+
+  const all = await getAll(StorageKeys.EXPENSES);
+  const others = all.filter((e) => e.userId !== userId);
+
+  const normalizedMine = expenses.map((e) => {
+    const withMeta = { id: e?.id || generateId(), ...e, userId };
+    const n = normalizeExpense(withMeta);
     validateExpense(n);
     return n;
   });
-  await setAll(StorageKeys.EXPENSES, normalized);
-  return normalized;
+
+  const finalList = [...others, ...normalizedMine];
+  await setAll(StorageKeys.EXPENSES, finalList);
+  return normalizedMine;
 }
 
 // PUBLIC_INTERFACE
