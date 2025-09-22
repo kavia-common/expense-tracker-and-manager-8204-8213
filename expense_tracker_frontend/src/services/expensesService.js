@@ -1,46 +1,228 @@
 //
-// Domain CRUD for expenses
+//
+// Domain CRUD service for expenses
+//
+// This module provides a JSON-safe, localStorage-backed expense service that
+// uses the storage.js helpers. All public methods return plain JSON-compatible
+// data and never Date or other non-serializable objects.
+//
+// Typical expense shape:
+// {
+//   id: string,
+//   date: string (ISO YYYY-MM-DD),
+//   amount: number,
+//   category: string,
+//   description?: string,
+//   paymentMethod?: string,
+//   tags?: string[]
+// }
 //
 import { StorageKeys, getAll, setAll, addItem, updateItem, removeItem } from './storage';
 
 /**
- * Generate a simple unique id.
+ * Normalize an expense into a JSON-safe object with canonical field types.
+ * - Ensures amount is a finite number (2 decimals)
+ * - Ensures date is a YYYY-MM-DD string (not Date object)
+ * - Ensures tags is an array of strings
+ * - Trims string fields
  */
-function uid() {
-  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+function normalizeExpense(raw) {
+  const exp = { ...raw };
+
+  // Normalize date
+  if (exp.date instanceof Date) {
+    // Convert Date to yyyy-mm-dd
+    const y = exp.date.getFullYear();
+    const m = String(exp.date.getMonth() + 1).padStart(2, '0');
+    const d = String(exp.date.getDate()).padStart(2, '0');
+    exp.date = `${y}-${m}-${d}`;
+  } else if (typeof exp.date === 'string') {
+    // Accept as-is; further validation happens in validateExpense
+    exp.date = exp.date.trim();
+  }
+
+  // Normalize amount
+  if (typeof exp.amount === 'string') {
+    const parsed = Number(exp.amount);
+    exp.amount = Number.isFinite(parsed) ? parsed : exp.amount;
+  }
+  if (typeof exp.amount === 'number') {
+    // Round to 2 decimals without introducing string type
+    exp.amount = Math.round((exp.amount + Number.EPSILON) * 100) / 100;
+  }
+
+  // Normalize strings
+  if (typeof exp.category === 'string') exp.category = exp.category.trim();
+  if (typeof exp.description === 'string') exp.description = exp.description.trim();
+  if (typeof exp.paymentMethod === 'string') exp.paymentMethod = exp.paymentMethod.trim();
+
+  // Normalize tags to array of strings
+  if (Array.isArray(exp.tags)) {
+    exp.tags = exp.tags
+      .filter((t) => t != null)
+      .map((t) => String(t).trim())
+      .filter((t) => t.length > 0);
+  } else if (typeof exp.tags === 'string') {
+    exp.tags = exp.tags
+      .split(',')
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0);
+  } else if (exp.tags == null) {
+    exp.tags = [];
+  } else {
+    exp.tags = [String(exp.tags).trim()].filter(Boolean);
+  }
+
+  return exp;
+}
+
+/**
+ * Validate an expense object for required fields and types.
+ * Throws an Error with an explanatory message if invalid.
+ */
+function validateExpense(expense) {
+  if (!expense) throw new Error('Expense is required');
+  const e = expense;
+
+  // Required string fields
+  const mustBeString = ['date', 'category'];
+  mustBeString.forEach((k) => {
+    if (typeof e[k] !== 'string' || e[k].trim().length === 0) {
+      throw new Error(`Field "${k}" must be a non-empty string`);
+    }
+  });
+
+  // Amount
+  if (typeof e.amount !== 'number' || !Number.isFinite(e.amount)) {
+    throw new Error('Field "amount" must be a finite number');
+  }
+
+  // Date shape: YYYY-MM-DD (simple check)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(e.date)) {
+    throw new Error('Field "date" must be in format YYYY-MM-DD');
+  }
+
+  // Optional string fields
+  ['description', 'paymentMethod'].forEach((k) => {
+    if (e[k] != null && typeof e[k] !== 'string') {
+      throw new Error(`Field "${k}" must be a string if provided`);
+    }
+  });
+
+  // Tags
+  if (!Array.isArray(e.tags)) {
+    throw new Error('Field "tags" must be an array of strings');
+  }
+  const allStrings = e.tags.every((t) => typeof t === 'string');
+  if (!allStrings) {
+    throw new Error('All "tags" must be strings');
+  }
+}
+
+/**
+ * Generate a simple unique id for expenses.
+ */
+function generateId() {
+  return `exp_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
 // PUBLIC_INTERFACE
 export async function listExpenses() {
   /** Returns all expenses (initializing from seed on first run). */
-  return getAll(StorageKeys.EXPENSES);
+  const list = await getAll(StorageKeys.EXPENSES);
+  // Ensure output is normalized JSON-safe
+  return list.map((e) => normalizeExpense(e));
 }
 
 // PUBLIC_INTERFACE
-export async function addExpense(expense) {
-  /** Adds a new expense. Ensures an id is present. Returns updated list. */
-  const withId = { id: expense.id || uid(), ...expense };
-  return addItem(StorageKeys.EXPENSES, withId);
+export async function getById(id) {
+  /** Returns a single expense by id, or null if not found. */
+  if (!id) return null;
+  const list = await getAll(StorageKeys.EXPENSES);
+  const found = list.find((e) => e.id === id);
+  return found ? normalizeExpense(found) : null;
 }
 
 // PUBLIC_INTERFACE
-export async function updateExpense(id, partial) {
-  /** Updates fields for the expense with given id. Returns updated list. */
-  return updateItem(
+export async function create(expense) {
+  /**
+   * Creates a new expense.
+   * - Generates id if missing.
+   * - Normalizes and validates input.
+   * - Persists to storage and returns the created expense.
+   */
+  const normalized = normalizeExpense({
+    id: expense?.id || generateId(),
+    ...expense,
+  });
+  validateExpense(normalized);
+
+  const updatedList = await addItem(StorageKeys.EXPENSES, normalized);
+  // Return the created item as saved (normalized)
+  return normalized;
+}
+
+// PUBLIC_INTERFACE
+export async function update(id, partial) {
+  /**
+   * Updates an existing expense by id with provided partial fields.
+   * - Loads existing expense, merges, normalizes, validates.
+   * - Persists change and returns updated expense.
+   */
+  if (!id) throw new Error('Id is required for update');
+
+  const list = await getAll(StorageKeys.EXPENSES);
+  const existing = list.find((e) => e.id === id);
+  if (!existing) throw new Error('Expense not found');
+
+  const merged = { ...existing, ...partial, id }; // keep id intact
+  const normalized = normalizeExpense(merged);
+  validateExpense(normalized);
+
+  await updateItem(
     StorageKeys.EXPENSES,
     (e) => e.id === id,
-    () => partial
+    () => normalized
   );
+
+  return normalized;
 }
 
 // PUBLIC_INTERFACE
-export async function deleteExpense(id) {
-  /** Deletes the expense with the given id. Returns updated list. */
-  return removeItem(StorageKeys.EXPENSES, (e) => e.id === id);
+export async function remove(id) {
+  /**
+   * Removes an expense by id.
+   * Returns true if an item was removed, false if not found.
+   */
+  if (!id) return false;
+  const before = await getAll(StorageKeys.EXPENSES);
+  const had = before.some((e) => e.id === id);
+  await removeItem(StorageKeys.EXPENSES, (e) => e.id === id);
+  return had;
 }
 
 // PUBLIC_INTERFACE
-export async function replaceAllExpenses(expenses) {
-  /** Replaces the entire expenses dataset. Returns saved list. */
-  return setAll(StorageKeys.EXPENSES, expenses);
+export async function replaceAll(expenses) {
+  /**
+   * Replaces entire expenses dataset.
+   * Validates and normalizes all entries before saving.
+   * Returns saved list.
+   */
+  if (!Array.isArray(expenses)) throw new Error('Input must be an array');
+  const normalized = expenses.map((e) => {
+    const withId = { id: e?.id || generateId(), ...e };
+    const n = normalizeExpense(withId);
+    validateExpense(n);
+    return n;
+  });
+  await setAll(StorageKeys.EXPENSES, normalized);
+  return normalized;
 }
+
+// PUBLIC_INTERFACE
+export const helpers = {
+  /** Utility helpers intended for reuse in UI or other layers. */
+  generateId,
+  validateExpense,
+  normalizeExpense,
+};
